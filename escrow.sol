@@ -2,7 +2,7 @@
 // ERC Token Standard #20 Interface
 // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
 // ----------------------------------------------------------------------------
-pragma solidity >= 0.4.16 < 6.0.0;
+pragma solidity ^0.4.16;
 
 /**
  * Math operations with safety checks
@@ -32,25 +32,25 @@ library SafeMath {
     return c;
   }
 
-  function max64(uint64 a, uint64 b) internal pure returns (uint64) {
+  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
     return a >= b ? a : b;
   }
 
-  function min64(uint64 a, uint64 b) internal pure returns (uint64) {
+  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
     return a < b ? a : b;
   }
 
-  function max256(uint256 a, uint256 b) internal pure returns (uint256) {
+  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
     return a >= b ? a : b;
   }
 
-  function min256(uint256 a, uint256 b) internal pure returns (uint256) {
+  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
     return a < b ? a : b;
   }
 
   function assert(bool assertion) internal {
     if (!assertion) {
-      revert();
+      throw;
     }
   }
 }
@@ -68,7 +68,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  constructor() public {
+  function Ownable() {
     owner = msg.sender;
   }
 
@@ -78,7 +78,7 @@ contract Ownable {
    */
   modifier onlyOwner() {
     if (msg.sender != owner) {
-      revert();
+      throw;
     }
     _;
   }
@@ -88,7 +88,7 @@ contract Ownable {
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) onlyOwner public{
+  function transferOwnership(address newOwner) onlyOwner {
     if (newOwner != address(0)) {
       owner = newOwner;
     }
@@ -144,13 +144,13 @@ contract ExchangeLikepointToPKC is Ownable {
       }
   }
   function reserveToken(address token, uint256 amount) onlyOwner public {
-     tokens[token][address(this)] = tokens[token][address(this)].add(amount);
-     if(!ERC20(token).transferFrom(msg.sender, address(this), amount)) revert();
-     emit Reserve(token, msg.sender, amount);
+     tokens[token][this] = tokens[token][this].add(amount);
+     if(!ERC20(token).transferFrom(msg.sender, this, amount)) revert();
+     Reserve(token, msg.sender, amount);
   }
   function withdrawByAdmin(address token, uint256 amount) public returns (bool) {
-    if (tokens[token][address(this)] < amount) revert();
-    tokens[token][address(this)] = tokens[token][address(this)].sub(amount);
+    if (tokens[token][this] < amount) revert();
+    tokens[token][this] = tokens[token][this].sub(amount);
     if (token == address(0)) {
       if (!msg.sender.send(amount)) revert();
     } else {
@@ -161,21 +161,21 @@ contract ExchangeLikepointToPKC is Ownable {
   function swapLikeToPKC(address token, address token2, uint256 amount) public returns (bool) {
       if(!checkAddressLikepoint(token)) revert();
       if(!checkAddressPKC(token2)) revert();
-      tokens[token][address(this)] = tokens[token][address(this)].add(amount);
-      if(!ERC20(token).transferFrom(msg.sender, address(this), amount)) revert();
-      tokens[token2][address(this)] = tokens[token2][address(this)].sub(amount/rate);
+      tokens[token][this] = tokens[token][this].add(amount);
+      if(!ERC20(token).transferFrom(msg.sender, this, amount)) revert();
+      tokens[token2][this] = tokens[token2][this].sub(amount/rate);
       if (!ERC20(token2).transfer(msg.sender, amount/rate)) revert();
-      emit SwapLIKE(token, token2, msg.sender, amount, amount/rate);     
+      SwapLIKE(token, token2, msg.sender, amount, amount/rate);     
       return true;
   }
   function swapPKCToLike(address token, address token2, uint256 amount) public returns (bool) {
       if(!checkAddressPKC(token)) revert();
       if(!checkAddressLikepoint(token2)) revert();
-      tokens[token][address(this)] = tokens[token][address(this)].add(amount);
-      if(!ERC20(token).transferFrom(msg.sender, address(this), amount)) revert();
-      tokens[token2][address(this)] = tokens[token2][address(this)].sub(amount*rate);
+      tokens[token][this] = tokens[token][this].add(amount);
+      if(!ERC20(token).transferFrom(msg.sender, this, amount)) revert();
+      tokens[token2][this] = tokens[token2][this].sub(amount*rate);
       if (!ERC20(token2).transfer(msg.sender, amount*rate)) revert();
-      emit SwapLIKE(token, token2, msg.sender, amount, amount*rate);
+      SwapLIKE(token, token2, msg.sender, amount, amount*rate);
       return true;
   }
   
