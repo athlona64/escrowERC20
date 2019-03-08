@@ -130,6 +130,16 @@ contract ExchangeLikepointToPKC is Ownable {
       rate = setRate;
   }
   
+  function checkAddressLikepoint(address token) internal returns (bool) {
+      if(token == likepoint) {
+          return true;
+      }
+  }
+  function checkAddressPKC(address token) internal returns (bool) {
+      if(token == pkc) {
+          return true;
+      }
+  }
   function reserveToken(address token, uint256 amount) onlyOwner {
      tokens[token][this] = tokens[token][this].add(amount);
      if(!ERC20(token).transferFrom(msg.sender, this, amount)) throw;
@@ -145,8 +155,8 @@ contract ExchangeLikepointToPKC is Ownable {
     }
   }
   function swapLikeToPKC(address token, address token2, uint256 amount) returns (bool success) {
-      require(likepoint != token);
-      require(pkc != token2);
+      if(!checkAddressLikepoint(token)) throw;
+      if(!checkAddressPKC(token2)) throw;
       tokens[token][this] = tokens[token][this].add(amount);
       if(!ERC20(token).transferFrom(msg.sender, this, amount)) throw;
       tokens[token2][this] = tokens[token2][this].sub(amount/rate);
@@ -154,8 +164,8 @@ contract ExchangeLikepointToPKC is Ownable {
       SwapLIKE(token, token2, msg.sender, amount, amount/rate);     
   }
   function swapPKCToLike(address token, address token2, uint256 amount) returns (bool success) {
-      require(pkc != token);
-      require(likepoint != token2);
+      if(!checkAddressPKC(token)) throw;
+      if(!checkAddressLikepoint(token2)) throw;
       tokens[token][this] = tokens[token][this].add(amount);
       if(!ERC20(token).transferFrom(msg.sender, this, amount)) throw;
       tokens[token2][this] = tokens[token2][this].sub(amount*rate);
