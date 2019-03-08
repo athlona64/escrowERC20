@@ -120,57 +120,63 @@ contract ExchangeLikepointToPKC is Ownable {
   address public likepoint;
   address public pkc;
   uint256 public rate = 100;
-  function setLikepoint(address setAddr) onlyOwner returns (bool success) {
+  function setLikepoint(address setAddr) onlyOwner  public returns (bool) {
       likepoint = setAddr;
+      return true;
   }
-  function setPKC(address setAddr) onlyOwner returns (bool success) {
+  function setPKC(address setAddr) onlyOwner public returns (bool) {
       pkc = setAddr;
+      return true;
   }
-  function setRate(uint256 setRate) onlyOwner returns (bool success) {
-      rate = setRate;
+  function setRate(uint256 set) onlyOwner public returns (bool) {
+      rate = set;
+      return true;
   }
   
-  function checkAddressLikepoint(address token) internal returns (bool) {
-      if(token == likepoint) {
+  function checkAddressLikepoint(address token) internal view returns (bool) {
+      if(token == address(likepoint)) {
           return true;
       }
   }
-  function checkAddressPKC(address token) internal returns (bool) {
-      if(token == pkc) {
+  function checkAddressPKC(address token) internal view returns (bool) {
+      if(token == address(pkc)) {
           return true;
       }
   }
-  function reserveToken(address token, uint256 amount) onlyOwner {
+  function reserveToken(address token, uint256 amount) onlyOwner public {
      tokens[token][this] = tokens[token][this].add(amount);
-     if(!ERC20(token).transferFrom(msg.sender, this, amount)) throw;
+     if(!ERC20(token).transferFrom(msg.sender, this, amount)) revert();
      Reserve(token, msg.sender, amount);
   }
-  function withdrawByAdmin(address token, uint256 amount) returns (bool success) {
-    if (tokens[token][this] < amount) throw;
+  function withdrawByAdmin(address token, uint256 amount) public returns (bool) {
+    if (tokens[token][this] < amount) revert();
     tokens[token][this] = tokens[token][this].sub(amount);
     if (token == address(0)) {
-      if (!msg.sender.send(amount)) throw;
+      if (!msg.sender.send(amount)) revert();
     } else {
-      if (!ERC20(token).transfer(msg.sender, amount)) throw;
+      if (!ERC20(token).transfer(msg.sender, amount)) revert();
     }
+    return true;
   }
-  function swapLikeToPKC(address token, address token2, uint256 amount) returns (bool success) {
-      if(!checkAddressLikepoint(token)) throw;
-      if(!checkAddressPKC(token2)) throw;
+  function swapLikeToPKC(address token, address token2, uint256 amount) public returns (bool) {
+      if(!checkAddressLikepoint(token)) revert();
+      if(!checkAddressPKC(token2)) revert();
       tokens[token][this] = tokens[token][this].add(amount);
-      if(!ERC20(token).transferFrom(msg.sender, this, amount)) throw;
+      if(!ERC20(token).transferFrom(msg.sender, this, amount)) revert();
       tokens[token2][this] = tokens[token2][this].sub(amount/rate);
-      if (!ERC20(token2).transfer(msg.sender, amount/rate)) throw;
+      if (!ERC20(token2).transfer(msg.sender, amount/rate)) revert();
       SwapLIKE(token, token2, msg.sender, amount, amount/rate);     
+      return true;
   }
-  function swapPKCToLike(address token, address token2, uint256 amount) returns (bool success) {
-      if(!checkAddressPKC(token)) throw;
-      if(!checkAddressLikepoint(token2)) throw;
+  function swapPKCToLike(address token, address token2, uint256 amount) public returns (bool) {
+      if(!checkAddressPKC(token)) revert();
+      if(!checkAddressLikepoint(token2)) revert();
       tokens[token][this] = tokens[token][this].add(amount);
-      if(!ERC20(token).transferFrom(msg.sender, this, amount)) throw;
+      if(!ERC20(token).transferFrom(msg.sender, this, amount)) revert();
       tokens[token2][this] = tokens[token2][this].sub(amount*rate);
-      if (!ERC20(token2).transfer(msg.sender, amount*rate)) throw;
+      if (!ERC20(token2).transfer(msg.sender, amount*rate)) revert();
       SwapLIKE(token, token2, msg.sender, amount, amount*rate);
+      return true;
   }
   
 
